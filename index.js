@@ -92,25 +92,25 @@ app.post('/api/v1/products', async (req, res) => {
 app.get('/api/v1/products', async (req, res) => {
   try {
     const {
-      page =1,
-      limit =10,
-      search =  '',
-      category ='',
-      minPrice =0,
+      page = 1,
+      limit = 10,
+      search = '',
+      category = '',
+      minPrice = 0,
       maxPrice = Number.MAX_SAFE_INTEGER
 
     } = req.query;
 
-    const pageNumber = parseInt(page,10) ;
+    const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
     const minPriceNumber = parseFloat(minPrice);
     const maxPriceNumber = parseFloat(maxPrice);
 
-    const query ={
-      title:{$regex:search,$options:'i'},
-      price:{$gte:minPriceNumber, $lte:maxPriceNumber}
+    const query = {
+      title: { $regex: search, $options: 'i' },
+      price: { $gte: minPriceNumber, $lte: maxPriceNumber }
     }
-    if(category){
+    if (category) {
       query.category = category;
 
     }
@@ -118,10 +118,10 @@ app.get('/api/v1/products', async (req, res) => {
     const totalProducts = await Product.countDocuments(query);
 
     const products = await Product.find(query)
-    .populate('category')
-    .skip((pageNumber - 1) * limitNumber)
-    .limit(limitNumber)
-    .exec()
+      .populate('category')
+      .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber)
+      .exec()
     const meta = {
       totalItems: totalProducts,
       currentPage: pageNumber,
@@ -129,9 +129,23 @@ app.get('/api/v1/products', async (req, res) => {
       itemsPerPage: limitNumber
     };
 
-    res.json({meta, products})
+    res.json({ meta, products })
   } catch (err) {
     res.status(500).json({ message: err.message })
+  }
+});
+
+//!get single product api
+
+app.get('/api/v1/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate('category');
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 })
 
