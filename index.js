@@ -151,21 +151,35 @@ app.get('/api/v1/products/:id', async (req, res) => {
 
 //!update product
 
-app.put('/api/v1/products/:id', async(req, res) => {
-  try{
+app.put('/api/v1/products/:id', async (req, res) => {
+  try {
     const updatedData = req.body;
-    const product = await Product.findByIdAndUpdate(req.params.id, updatedData, {new:true});
-    if(!product){
+    const product = await Product.findByIdAndUpdate(req.params.id, updatedData, { new: true });
+    if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
     res.json(product);
 
-  }catch (err){
+  } catch (err) {
     res.status(400).json({ message: err.message });
   }
 
-  
+
+});
+
+//!delete a product 
+
+app.delete('/api/v1/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.json({ message: 'Product deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 })
 
 app.get('/', (req, res) => {
