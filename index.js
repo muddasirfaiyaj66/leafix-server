@@ -85,6 +85,17 @@ app.post('/api/v1/products', async (req, res) => {
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+});
+
+//get all products
+
+app.get('/api/v1/products', async (req, res) => {
+  try {
+    const products = await Product.find().populate('category')
+    res.json(products)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
 })
 
 app.get('/', (req, res) => {
