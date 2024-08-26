@@ -29,10 +29,15 @@ const productSchema = new mongoose.Schema({
   description:String,
   rating:Number,
   image:String,
-  category:String
+  category:{type:mongoose.Schema.Types.ObjectId, ref:'Category'},
 
 
 });
+
+const categorySchema = new mongoose.Schema({
+  name:String
+});
+
 app.get('/', (req, res) => {
   res.send(`
           <div style="display: flex; justify-content: center; align-items: center; text-align: center;color:white;background-color:black; height:100vh; width:full">
