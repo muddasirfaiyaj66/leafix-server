@@ -91,8 +91,45 @@ app.post('/api/v1/products', async (req, res) => {
 
 app.get('/api/v1/products', async (req, res) => {
   try {
-    const products = await Product.find().populate('category')
-    res.json(products)
+    const {
+      page =1,
+      limit =10,
+      search =  '',
+      category ='',
+      minPrice =0,
+      maxPrice = Number.MAX_SAFE_INTEGER
+
+    } = req.query;
+
+    const pageNumber = parseInt(page,10) ;
+    const limitNumber = parseInt(limit, 10);
+    const minPriceNumber = parseFloat(minPrice);
+    const maxPriceNumber = parseFloat(maxPrice);
+
+    const query ={
+      title:{$regex:search,$options:'i'},
+      price:{$gte:minPriceNumber, $lte:maxPriceNumber}
+    }
+    if(category){
+      query.category = category;
+
+    }
+
+    const totalProducts = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
+    .populate('category')
+    .skip((pageNumber - 1) * limitNumber)
+    .limit(limitNumber)
+    .exec()
+    const meta = {
+      totalItems: totalProducts,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalProducts / limitNumber),
+      itemsPerPage: limitNumber
+    };
+
+    res.json({meta, products})
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
