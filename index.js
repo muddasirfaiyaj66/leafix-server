@@ -23,7 +23,7 @@ mongoose.connect(process.env.DATABASE_URL, {
     res.send(`
           <div style="display: flex; justify-content: center; align-items: center; text-align: center;color:white;background-color:black; height:100vh; width:full">
             <div>
-            <h1 >Welcome to <span style="color:yellow">  Leafix</span> <span style="color:#ff0000">Server</span> 😊</h1>
+            <h1 >Welcome to <span style="color:yellow">Leafix</span> <span style="color:#ff0000">Server</span> 😊</h1>
             <p>This is the API server for <span style="color:#4ef037">Leafix</span> application.</p>
             </div>
           </div>
