@@ -6,7 +6,7 @@ require('dotenv').config()
 
 
 const app = express();
-const port = process.env.PORT 
+const port = process.env.PORT
 
 
 
@@ -15,12 +15,26 @@ app.use(bodyParser.json());
 
 //mongoDb database connection
 mongoose.connect(process.env.DATABASE_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  });
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
-  app.get('/', (req, res) => {
-    res.send(`
+
+//product schema 
+
+const productSchema = new mongoose.Schema({
+  title:String,
+  price:Number,
+  quantity:Number,
+  description:String,
+  rating:Number,
+  image:String,
+  category:String
+
+
+});
+app.get('/', (req, res) => {
+  res.send(`
           <div style="display: flex; justify-content: center; align-items: center; text-align: center;color:white;background-color:black; height:100vh; width:full">
             <div>
             <h1 >Welcome to <span style="color:yellow">Leafix</span> <span style="color:#ff0000">Server</span> 😊</h1>
@@ -29,7 +43,7 @@ mongoose.connect(process.env.DATABASE_URL, {
           </div>
       
       `);
-  });
+});
 
 // Start server
 app.listen(port, () => {
