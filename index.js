@@ -23,23 +23,35 @@ mongoose.connect(process.env.DATABASE_URL, {
 //product schema 
 
 const productSchema = new mongoose.Schema({
-  title:String,
-  price:Number,
-  quantity:Number,
-  description:String,
-  rating:Number,
-  image:String,
-  category:{type:mongoose.Schema.Types.ObjectId, ref:'Category'},
+  title: String,
+  price: Number,
+  quantity: Number,
+  description: String,
+  rating: Number,
+  image: String,
+  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
 
 
 });
 
 const categorySchema = new mongoose.Schema({
-  name:String
+  name: String
 });
 
 const Product = mongoose.model('Product', productSchema);
 const Category = mongoose.model('Category', categorySchema);
+//* Category Api'S
+app.post('/api/v1/categories', async (req, res) => {
+  try {
+    const category = req.body;
+    const result = await Category.create(category)
+    res.status(201).json(result);
+    res.status(400).json({ message: err.message });
+  } catch (err) { }
+})
+
+
+
 
 app.get('/', (req, res) => {
   res.send(`
