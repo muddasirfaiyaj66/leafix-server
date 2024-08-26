@@ -68,7 +68,24 @@ app.get('/api/v1/categories', async (req, res) => {
 })
 
 
+//* Product Api'S
 
+//? Create a product
+
+app.post('/api/v1/products', async (req, res) => {
+  try {
+    const body = req.body;
+    const category = body.category;
+    const existingCategory = await Category.findById(category);
+    if (!existingCategory) {
+      return res.status(400).json({ message: 'Invalid category' });
+    }
+    const result = await Product.create(body)
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+})
 
 app.get('/', (req, res) => {
   res.send(`
