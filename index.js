@@ -14,10 +14,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 //mongoDb database connection
-mongoose.connect(process.env.DATABASE_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+mongoose.connect(process.env.DATABASE_URL)
 
 
 //product schema 
@@ -35,19 +32,39 @@ const productSchema = new mongoose.Schema({
 });
 
 const categorySchema = new mongoose.Schema({
-  name: String
+  name: { type: String, unique: true, required: true },
 });
 
 const Product = mongoose.model('Product', productSchema);
 const Category = mongoose.model('Category', categorySchema);
 //* Category Api'S
+
+//!Post Api for category
 app.post('/api/v1/categories', async (req, res) => {
   try {
-    const category = req.body;
-    const result = await Category.create(category)
+    const { name } = req.body;
+    const existingCategory = await Category.findOne({ name })
+    if (existingCategory) {
+      return res.status(409).json({ message: 'Category already exists' });
+    }
+    const result = await Category.create({ name })
     res.status(201).json(result);
+
+  } catch (err) {
     res.status(400).json({ message: err.message });
-  } catch (err) { }
+  }
+});
+
+
+//! get api for category
+
+app.get('/api/v1/categories', async (req, res) => {
+  try {
+    const result = await Category.find()
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 })
 
 
