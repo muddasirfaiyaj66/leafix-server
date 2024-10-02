@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const Stripe = require('stripe');
-const stripe = Stripe(`${process.env.STRIPE_SECRET_KEY}`);
-require('dotenv').config();
+const stripe = require("stripe")(`${process.env.STRIPE_SECRET_KEY}`)
+
 
 const app = express();
 const port = process.env.PORT;
@@ -17,14 +18,41 @@ mongoose.connect(process.env.DATABASE_URL);
 
 // Product schema 
 const productSchema = new mongoose.Schema({
-  title: String,
-  price: Number,
-  quantity: Number,
-  description: String,
-  rating: Number,
-  image: String,
-  category: String, 
-});
+  title: {
+    type: String,
+    required: true,  
+    trim: true,    
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0,  
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0,  
+    default: 0,  
+  },
+  description: {
+    type: String,
+    trim: true,  
+  },
+  rating: {
+    type: Number,
+    min: 0,
+    max: 5,
+    default: 0,  
+  },
+  image: {
+    type: String,
+    required: true,  
+  },
+  category: {
+    type: String,
+    required: true,  
+  }
+},{ timestamps: true });
 
 const Product = mongoose.model('Product', productSchema);
 
@@ -139,24 +167,86 @@ app.get('/', (req, res) => {
       `);
 });
 
-// Handle payment
+
 app.post('/api/v1/checkout', async (req, res) => {
-  const { token, amount } = req.body;
+  const { token, amount, email, cartItems } = req.body; 
 
   try {
-    const charge = await stripe.charges.create({
-      amount,
-      currency: 'usd',
-      description: 'Online Nursery Order',
-      source: token,
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: "usd",
+      payment_method_data: {
+        type: 'card',
+        card: {
+          token: token,
+        },
+      },
     });
-    res.status(200).json({ success: true, charge });
+    
+    
+
+    const productDetails = cartItems.map(item => {
+      return `${item.title} (Quantity: ${item.quantity}, Price: $${item.price})`;
+    }).join('\n');
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Payment Confirmation',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; border-radius: 5px;">
+          <h2 style="color: #333;">Thank You for Your Purchase!</h2>
+          <p style="color: #555;">Your payment of <strong>$${(amount / 100).toFixed(2)}</strong> was successful!</p>
+    
+          <h3 style="color: #333;">Order Summary</h3>
+          <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; padding: 10px; background-color: #fff;">
+            ${cartItems.map(item => `
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <img src="${item.image}" alt="${item.title}" style="width: 60px; height: 60px; border-radius: 5px; margin-right: 10px;">
+                <div>
+                  <h4 style="margin: 0; color: #333;">${item.title}</h4>
+                  <p style="margin: 0; color: #555;">Quantity: ${item.quantity}</p>
+                  <p style="margin: 0; color: #555;">Price: $${item.price.toFixed(2)}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+    
+          <p style="color: #555;">If you have any questions, feel free to contact us at <a href="mailto:${process.env.EMAIL_USER}" style="color: #007bff;">${process.env.EMAIL_USER}</a>.</p>
+          
+          <footer style="margin-top: 20px; text-align: center; color: #555;">
+            <img src="https://i.ibb.co.com/R2S8yg6/leafixM.png" alt="Leafix Logo" style="width: 100px; height: auto;">
+            <p style="margin: 0;">© 2024 Leafix. All rights reserved.</p>
+          </footer>
+        </div>
+      `,
+    };
+    
+
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error('Email sending failed:', err);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
+
+    res.status(200).json({ success: true, clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Payment failed:', error);
+    res.status(500).json({ message: 'Payment failed.' });
   }
 });
 
-// Start server
+
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
